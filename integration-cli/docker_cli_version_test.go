@@ -1,20 +1,18 @@
 package main
 
 import (
-	"fmt"
 	"os/exec"
 	"strings"
-	"testing"
+
+	"github.com/go-check/check"
 )
 
 // ensure docker version works
-func TestVersionEnsureSucceeds(t *testing.T) {
+func (s *DockerSuite) TestVersionEnsureSucceeds(c *check.C) {
 	versionCmd := exec.Command(dockerBinary, "version")
-	out, exitCode, err := runCommandWithOutput(versionCmd)
-	errorOut(err, t, fmt.Sprintf("encountered error while running docker version: %v", err))
-
-	if err != nil || exitCode != 0 {
-		t.Fatal("failed to execute docker version")
+	out, _, err := runCommandWithOutput(versionCmd)
+	if err != nil {
+		c.Fatalf("failed to execute docker version: %s, %v", out, err)
 	}
 
 	stringsToCheck := []string{
@@ -22,17 +20,18 @@ func TestVersionEnsureSucceeds(t *testing.T) {
 		"Client API version:",
 		"Go version (client):",
 		"Git commit (client):",
+		"OS/Arch (client):",
 		"Server version:",
 		"Server API version:",
 		"Go version (server):",
 		"Git commit (server):",
+		"OS/Arch (server):",
 	}
 
 	for _, linePrefix := range stringsToCheck {
 		if !strings.Contains(out, linePrefix) {
-			t.Errorf("couldn't find string %v in output", linePrefix)
+			c.Errorf("couldn't find string %v in output", linePrefix)
 		}
 	}
 
-	logDone("version - verify that it works and that the output is properly formatted")
 }

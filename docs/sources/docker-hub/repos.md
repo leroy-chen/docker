@@ -1,42 +1,37 @@
-page_title: Repositories and Images on Docker Hub
-page_description: Repositories and Images on Docker Hub
-page_keywords: Docker, docker, registry, accounts, plans, Dockerfile, Docker Hub, docs, documentation
+page_title: Your Repositories on Docker Hub
+page_description: Your Repositories on Docker Hub
+page_keywords: Docker, docker, registry, accounts, plans, Dockerfile, Docker Hub, webhooks, docs, documentation
 
-# Repositories and Images on Docker Hub
+# Your Hub repositories
 
-![repositories](/docker-hub/repos.png)
+Docker Hub repositories make it possible for you to share images with co-workers,
+customers or the Docker community at large. If you're building your images internally,
+either on your own Docker daemon, or using your own Continuous integration services,
+you can push them to a Docker Hub repository that you add to your Docker Hub user or
+organization account.
 
-## Searching for repositories and images
+Alternatively, if the source code for your Docker image is on GitHub or Bitbucket,
+you can use an "Automated build" repository, which is built by the Docker Hub
+services. See the [automated builds documentation](./builds.md) to read about
+the extra functionality provided by those services.
 
-You can `search` for all the publicly available repositories and images using
-Docker.
-
-    $ sudo docker search ubuntu
-
-This will show you a list of the currently available repositories on the
-Docker Hub which match the provided keyword.
-
-If a repository is private it won't be listed on the repository search
-results. To see repository statuses, you can look at your [profile
-page](https://hub.docker.com) on [Docker Hub](https://hub.docker.com).
-
-## Repositories
+![repositories](/docker-hub/hub-images/repos.png)
 
 Your Docker Hub repositories have a number of useful features.
 
-### Stars
+## Stars
 
 Your repositories can be starred and you can star repositories in
 return. Stars are a way to show that you like a repository. They are
 also an easy way of bookmarking your favorites.
 
-### Comments
+## Comments
 
 You can interact with other members of the Docker community and maintainers by
 leaving comments on repositories. If you find any comments that are not
 appropriate, you can flag them for review.
 
-### Collaborators and their role
+## Collaborators and their role
 
 A collaborator is someone you want to give access to a private
 repository. Once designated, they can `push` and `pull` to your
@@ -48,26 +43,11 @@ private to public.
 > A collaborator cannot add other collaborators. Only the owner of
 > the repository has administrative access.
 
-You can also collaborate on Docker Hub with organizations and groups.
-You can read more about that [here](accounts/).
+You can also assign more granular collaborator rights ("Read", "Write", or "Admin")
+on Docker Hub by using organizations and groups. For more information
+see the [accounts documentation](accounts/).
 
-## Official Repositories
-
-The Docker Hub contains a number of [official
-repositories](http://registry.hub.docker.com/official). These are
-certified repositories from vendors and contributors to Docker. They
-contain Docker images from vendors like Canonical, Oracle, and Red Hat
-that you can use to build applications and services.
-
-If you use Official Repositories you know you're using a supported,
-optimized and up-to-date image to power your applications.
-
-> **Note:**
-> If you would like to contribute an official repository for your
-> organization, product or team you can see more information
-> [here](https://github.com/docker/stackbrew).
-
-## Private Repositories
+## Private repositories
 
 Private repositories allow you to have repositories that contain images
 that you want to keep private, either to your own account or within an
@@ -100,45 +80,108 @@ Hub](https://registry.hub.docker.com/plans/) plan.
 
 ## Webhooks
 
-You can configure webhooks for your repositories on the Repository
-Settings page. A webhook is called only after a successful `push` is
+A webhook is an HTTP call-back triggered by a specific event.
+You can use a Hub repository webhook to notify people, services, and other
+applications after a new image is pushed to your repository (this also happens
+for Automated builds). For example, you can trigger an automated test or
+deployment to happen as soon as the image is available.
+
+To get started adding webhooks, go to the desired repository in the Hub,
+and click "Webhooks" under the "Settings" box.
+A webhook is called only after a successful `push` is
 made. The webhook calls are HTTP POST requests with a JSON payload
 similar to the example shown below.
 
-> **Note:** For testing, you can try an HTTP request tool like
-> [requestb.in](http://requestb.in/).
-
 *Example webhook JSON payload:*
 
+```
+{
+  "callback_url": "https://registry.hub.docker.com/u/svendowideit/busybox/hook/2141bc0cdec4hebec411i4c1g40242eg110020/",
+  "push_data": {
+    "images": [
+        "27d47432a69bca5f2700e4dff7de0388ed65f9d3fb1ec645e2bc24c223dc1cc3",
+        "51a9c7c1f8bb2fa19bcd09789a34e63f35abb80044bc10196e304f6634cc582c",
+        ...
+    ],
+    "pushed_at": 1.417566822e+09,
+    "pusher": "svendowideit"
+  },
+  "repository": {
+    "comment_count": 0,
+    "date_created": 1.417566665e+09,
+    "description": "",
+    "full_description": "webhook triggered from a 'docker push'",
+    "is_official": false,
+    "is_private": false,
+    "is_trusted": false,
+    "name": "busybox",
+    "namespace": "svendowideit",
+    "owner": "svendowideit",
+    "repo_name": "svendowideit/busybox",
+    "repo_url": "https://registry.hub.docker.com/u/svendowideit/busybox/",
+    "star_count": 0,
+    "status": "Active"
+}
+```
+
+<TODO: does it tell you what tag was updated?>
+
+For testing, you can try an HTTP request tool like [requestb.in](http://requestb.in/).
+
+> **Note**: The Docker Hub servers are currently in the IP range
+> `162.242.195.64 - 162.242.195.127`, so you can restrict your webhooks to
+> accept webhook requests from that set of IP addresses.
+
+### Webhook chains
+
+Webhook chains allow you to chain calls to multiple services. For example,
+you can use this to trigger a deployment of your container only after
+it has been successfully tested, then update a separate Changelog once the
+deployment is complete.
+After clicking the "Add webhook" button, simply add as many URLs as necessary
+in your chain.
+
+The first webhook in a chain will be called after a successful push. Subsequent
+URLs will be contacted after the callback has been validated.
+
+### Validating a callback
+
+In order to validate a callback in a webhook chain, you need to
+
+1. Retrieve the `callback_url` value in the request's JSON payload.
+1. Send a POST request to this URL containing a valid JSON body.
+
+> **Note**: A chain request will only be considered complete once the last
+> callback has been validated.
+
+To help you debug or simply view the results of your webhook(s),
+view the "History" of the webhook available on its settings page.
+
+#### Callback JSON data
+
+The following parameters are recognized in callback data:
+
+* `state` (required): Accepted values are `success`, `failure` and `error`.
+  If the state isn't `success`, the webhook chain will be interrupted.
+* `description`: A string containing miscellaneous information that will be
+  available on the Docker Hub. Maximum 255 characters.
+* `context`: A string containing the context of the operation. Can be retrieved
+  from the Docker Hub. Maximum 100 characters.
+* `target_url`: The URL where the results of the operation can be found. Can be
+  retrieved on the Docker Hub.
+
+*Example callback payload:*
+
     {
-       "push_data":{
-          "pushed_at":1385141110,
-          "images":[
-             "imagehash1",
-             "imagehash2",
-             "imagehash3"
-          ],
-          "pusher":"username"
-       },
-       "repository":{
-          "status":"Active",
-          "description":"my docker repo that does cool things",
-          "is_automated":false,
-          "full_description":"This is my full description",
-          "repo_url":"https://registry.hub.docker.com/u/username/reponame/",
-          "owner":"username",
-          "is_official":false,
-          "is_private":false,
-          "name":"reponame",
-          "namespace":"username",
-          "star_count":1,
-          "comment_count":1,
-          "date_created":1370174400,
-          "dockerfile":"my full dockerfile is listed here",
-          "repo_name":"username/reponame"
-       }
+      "state": "success",
+      "description": "387 tests PASSED",
+      "context": "Continuous integration by Acme CI",
+      "target_url": "http://ci.acme.com/results/afd339c1c3d27"
     }
 
-Webhooks allow you to notify people, services and other applications of
-new updates to your images and repositories.
+## Mark as unlisted
 
+By marking a repository as unlisted, you can create a publicly pullable repository
+which will not be in the Hub or commandline search. This allows you to have a limited
+release, but does not restrict access to anyone that is told, or guesses the repository
+name.

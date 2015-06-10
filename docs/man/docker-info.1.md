@@ -6,6 +6,7 @@ docker-info - Display system-wide information
 
 # SYNOPSIS
 **docker info**
+[**--help**]
 
 
 # DESCRIPTION
@@ -20,7 +21,8 @@ allocates a certain amount of data space and meta data space from the space
 available on the volume where `/var/lib/docker` is mounted.
 
 # OPTIONS
-There are no available options.
+**--help**
+  Print usage statement
 
 # EXAMPLES
 
@@ -35,8 +37,11 @@ Here is a sample output:
      Root Dir: /var/lib/docker/aufs
      Dirs: 80
     Execution Driver: native-0.2
+    Logging Driver: json-file
     Kernel Version: 3.13.0-24-generic
     Operating System: Ubuntu 14.04 LTS
+    CPUs: 1
+    Total Memory: 2 GiB
 
 # HISTORY
 April 2014, Originally compiled by William Henry (whenry at redhat dot com)

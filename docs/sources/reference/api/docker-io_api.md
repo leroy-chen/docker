@@ -10,7 +10,7 @@ page_keywords: API, Docker, index, REST, documentation, Docker Hub, registry
 
 # Repositories
 
-## User Repository
+## User repository
 
 ### Create a user repository
 
@@ -93,7 +93,7 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Account is not Active
 
-## Library Repository
+## Library repository
 
 ### Create a library repository
 
@@ -182,9 +182,9 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Account is not Active
 
-# Repository Images
+# Repository images
 
-## User Repository Images
+## User repository images
 
 ### Update user repository images
 
@@ -256,7 +256,7 @@ Status Codes:
 - **200** – OK
 - **404** – Not found
 
-## Library Repository Images
+## Library repository images
 
 ### Update library repository images
 
@@ -326,9 +326,9 @@ Status Codes:
 - **200** – OK
 - **404** – Not found
 
-# Repository Authorization
+# Repository authorization
 
-## Library Repository
+## Library repository
 
 ### Authorize a token for a library
 
@@ -361,7 +361,7 @@ Status Codes:
 - **403** – Permission denied
 - **404** – Not found
 
-## User Repository
+## User repository
 
 ### Authorize a token for a user repository
 
@@ -397,7 +397,7 @@ Status Codes:
 
 ## Users
 
-### User Login
+### User login
 
 `GET /v1/users/`
 
@@ -424,7 +424,7 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Account is not Active
 
-### User Register
+### User register
 
 `POST /v1/users/`
 
@@ -461,7 +461,7 @@ Status Codes:
 - **201** – User Created
 - **400** – Errors (invalid json, missing or invalid fields, etc)
 
-### Update User
+### Update user
 
 `PUT /v1/users/(username)/`
 
@@ -503,44 +503,3 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Account is not Active
 - **404** – User not found
-
-## Search
-
-If you need to search the index, this is the endpoint you would use.
-
-`GET /v1/search`
-
-Search the Index given a search term. It accepts
-
-    [GET](http://www.w3.org/Protocols/rfc2616/rfc2616-sec9.html#sec9.3)
-    only.
-
-**Example request**:
-
-        GET /v1/search?q=search_term HTTP/1.1
-        Host: index.docker.io
-        Accept: application/json
-
-**Example response**:
-
-        HTTP/1.1 200 OK
-        Vary: Accept
-        Content-Type: application/json
-
-        {"query":"search_term",
-          "num_results": 3,
-          "results" : [
-             {"name": "ubuntu", "description": "An ubuntu image..."},
-             {"name": "centos", "description": "A centos image..."},
-             {"name": "fedora", "description": "A fedora image..."}
-           ]
-         }
-
-Query Parameters:
-
-- **q** – what you want to search for
-
-Status Codes:
-
-- **200** – no error
-- **500** – server error

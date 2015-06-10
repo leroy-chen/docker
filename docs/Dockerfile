@@ -1,49 +1,163 @@
 #
 # See the top level Makefile in https://github.com/docker/docker for usage.
 #
-FROM 		debian:jessie
-MAINTAINER	Sven Dowideit <SvenDowideit@docker.com> (@SvenDowideit)
+FROM docs/base:latest
+MAINTAINER Sven Dowideit <SvenDowideit@docker.com> (@SvenDowideit)
 
-RUN 	apt-get update && apt-get install -y make python-pip python-setuptools vim-tiny git gettext python-dev libssl-dev
+# This section ensures we pull the correct version of each
+# sub project
+ENV COMPOSE_BRANCH release
+ENV SWARM_BRANCH v0.2.0
+ENV MACHINE_BRANCH docs
+ENV DISTRIB_BRANCH docs
+ENV KITEMATIC_BRANCH master
 
-RUN	pip install mkdocs
 
-# add MarkdownTools to get transclusion
-# (future development)
-#RUN	easy_install -U setuptools
-#RUN	pip install MarkdownTools2
+# TODO: need the full repo source to get the git version info
+COPY . /src
 
-# this version works, the current versions fail in different ways
-RUN	pip install awscli==1.4.4 pyopenssl==0.12
+# Reset the /docs dir so we can replace the theme meta with the new repo's git info
+# RUN git reset --hard
 
-# make sure the git clone is not an old cache - we've published old versions a few times now
-ENV	CACHE_BUST Jul2014
+# Then copy the desired docs into the /docs/sources/ dir
+COPY ./sources/ /docs/sources
 
-# get my sitemap.xml branch of mkdocs and use that for now
-RUN	git clone https://github.com/SvenDowideit/mkdocs	&&\
-	cd mkdocs/						&&\
-	git checkout docker-markdown-merge			&&\
-	./setup.py install
+COPY ./VERSION VERSION
 
-ADD 	. /docs
-ADD	MAINTAINERS /docs/sources/humans.txt
-WORKDIR	/docs
+# adding the image spec will require Docker 1.5 and `docker build -f docs/Dockerfile .`
+#COPY ./image/spec/v1.md /docs/sources/reference/image-spec-v1.md
 
-RUN	VERSION=$(cat /docs/VERSION)								&&\
-        MAJOR_MINOR="${VERSION%.*}"								&&\
-	for i in $(seq $MAJOR_MINOR -0.1 1.0) ; do echo "<li><a class='version' href='/v$i'>Version v$i</a></li>" ; done > /docs/sources/versions.html_fragment &&\
-	GIT_BRANCH=$(cat /docs/GIT_BRANCH)							&&\
-	GITCOMMIT=$(cat /docs/GITCOMMIT)							&&\
-	AWS_S3_BUCKET=$(cat /docs/AWS_S3_BUCKET)						&&\
-	BUILD_DATE=$(date)									&&\
-	sed -i "s/\$VERSION/$VERSION/g" /docs/theme/mkdocs/base.html				&&\
-	sed -i "s/\$MAJOR_MINOR/v$MAJOR_MINOR/g" /docs/theme/mkdocs/base.html			&&\
-	sed -i "s/\$GITCOMMIT/$GITCOMMIT/g" /docs/theme/mkdocs/base.html			&&\
-	sed -i "s/\$GIT_BRANCH/$GIT_BRANCH/g" /docs/theme/mkdocs/base.html			&&\
-	sed -i "s/\$BUILD_DATE/$BUILD_DATE/g" /docs/theme/mkdocs/base.html				&&\
-	sed -i "s/\$AWS_S3_BUCKET/$AWS_S3_BUCKET/g" /docs/theme/mkdocs/base.html
+# TODO: don't do this - look at merging the yml file in build.sh
+COPY ./mkdocs.yml ./s3_website.json ./release.sh ./
 
-# note, EXPOSE is only last because of https://github.com/docker/docker/issues/3525
-EXPOSE	8000
+#######################
+# Docker Distribution
+########################
 
-CMD 	["mkdocs", "serve"]
+#ADD https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/mkdocs.yml /docs/mkdocs-distribution.yml
+
+ADD https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/images/notifications.png \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/images/registry.png \
+  /docs/sources/registry/images/
+
+ADD https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/index.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/deploying.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/configuration.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/storagedrivers.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/notifications.md \
+  /docs/sources/registry/
+
+ADD https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/spec/api.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/spec/json.md \
+  /docs/sources/registry/spec/
+  
+ADD https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/storage-drivers/s3.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/storage-drivers/azure.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/storage-drivers/filesystem.md \
+    https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/storage-drivers/inmemory.md \
+  /docs/sources/registry/storage-drivers/
+
+ADD https://raw.githubusercontent.com/docker/distribution/${DISTRIB_BRANCH}/docs/spec/auth/token.md /docs/sources/registry/spec/auth/token.md
+
+RUN sed -i.old '1s;^;no_version_dropdown: true;' \
+  /docs/sources/registry/*.md \
+  /docs/sources/registry/spec/*.md \
+  /docs/sources/registry/spec/auth/*.md \
+  /docs/sources/registry/storage-drivers/*.md 
+
+RUN sed -i.old  -e '/^<!--GITHUB/g' -e '/^IGNORES-->/g'\
+  /docs/sources/registry/*.md \
+  /docs/sources/registry/spec/*.md \
+  /docs/sources/registry/spec/auth/*.md \
+  /docs/sources/registry/storage-drivers/*.md 
+
+#######################
+# Docker Swarm
+#######################
+
+#ADD https://raw.githubusercontent.com/docker/swarm/${SWARM_BRANCH}/docs/mkdocs.yml /docs/mkdocs-swarm.yml
+ADD https://raw.githubusercontent.com/docker/swarm/${SWARM_BRANCH}/docs/index.md /docs/sources/swarm/index.md
+
+ADD https://raw.githubusercontent.com/docker/swarm/${SWARM_BRANCH}/discovery/README.md /docs/sources/swarm/discovery.md
+
+ADD https://raw.githubusercontent.com/docker/swarm/${SWARM_BRANCH}/api/README.md /docs/sources/swarm/API.md
+
+ADD https://raw.githubusercontent.com/docker/swarm/${SWARM_BRANCH}/scheduler/filter/README.md /docs/sources/swarm/scheduler/filter.md
+
+ADD https://raw.githubusercontent.com/docker/swarm/${SWARM_BRANCH}/scheduler/strategy/README.md /docs/sources/swarm/scheduler/strategy.md
+
+RUN sed -i.old '1s;^;no_version_dropdown: true;' /docs/sources/swarm/*.md /docs/sources/swarm/scheduler/*.md
+
+#######################
+# Docker Machine
+#######################
+#ADD https://raw.githubusercontent.com/docker/machine/${MACHINE_BRANCH}/docs/mkdocs.yml /docs/mkdocs-machine.yml
+
+ADD https://raw.githubusercontent.com/docker/machine/${MACHINE_BRANCH}/docs/index.md /docs/sources/machine/index.md
+RUN sed -i.old '1s;^;no_version_dropdown: true;' /docs/sources/machine/index.md
+
+#######################
+# Docker Compose
+#######################
+
+#ADD https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/mkdocs.yml /docs/mkdocs-compose.yml
+
+ADD https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/index.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/install.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/cli.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/yml.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/env.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/completion.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/django.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/rails.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/wordpress.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/extends.md \
+  https://raw.githubusercontent.com/docker/compose/${COMPOSE_BRANCH}/docs/production.md \
+  /docs/sources/compose/
+
+RUN sed -i.old '1s;^;no_version_dropdown: true;' /docs/sources/compose/*.md
+
+#######################
+# Kitematic
+#######################
+ADD https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/faq.md \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/index.md \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/known-issues.md \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/minecraft-server.md \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/nginx-web-server.md \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/rethinkdb-dev-database.md \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/userguide.md \
+  /docs/sources/kitematic/
+RUN sed -i.old '1s;^;no_version_dropdown: true;' /docs/sources/kitematic/*.md
+ADD https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/browse-images.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/change-folder.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/cli-access-button.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/cli-redis-container.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/cli-terminal.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/containers.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/installing.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-add-server.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-create.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-data-volume.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-login.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-map.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-port.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-restart.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/minecraft-server-address.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-2048-files.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-2048.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-create.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-data-folder.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-data-volume.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-hello-world.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-preview.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/nginx-serving-2048.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/rethink-container.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/rethink-create.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/rethink-ports.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/rethinkdb-preview.png \
+  https://raw.githubusercontent.com/kitematic/kitematic/${KITEMATIC_BRANCH}/docs/assets/volumes-dir.png \
+  /docs/sources/kitematic/assets/
+
+# Then build everything together, ready for mkdocs
+RUN /docs/build.sh

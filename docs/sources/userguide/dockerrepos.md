@@ -24,20 +24,20 @@ Docker itself provides access to Docker Hub services via the `docker search`,
 
 ### Account creation and login
 Typically, you'll want to start by creating an account on Docker Hub (if you haven't
-already) and logging in. You can create your account directly on 
+already) and logging in. You can create your account directly on
 [Docker Hub](https://hub.docker.com/account/signup/), or by running:
 
-    $ sudo docker login
+    $ docker login
 
-This will prompt you for a user name, which will become the public namespace for your 
+This will prompt you for a user name, which will become the public namespace for your
 public repositories.
 If your user name is available, Docker will prompt you to enter a password and your
 e-mail address. It will then automatically log you in. You can now commit and
 push your own images up to your repos on Docker Hub.
 
 > **Note:**
-> Your authentication credentials will be stored in the [`.dockercfg`
-> authentication file](#authentication-file) in your home directory.
+> Your authentication credentials will be stored in the `.dockercfg`
+> authentication file in your home directory.
 
 ## Searching for images
 
@@ -45,22 +45,22 @@ You can search the [Docker Hub](https://hub.docker.com) registry via its search
 interface or by using the command line interface. Searching can find images by image
 name, user name, or description:
 
-    $ sudo docker search centos
+    $ docker search centos
     NAME           DESCRIPTION                                     STARS     OFFICIAL   TRUSTED
     centos         Official CentOS 6 Image as of 12 April 2014     88
     tianon/centos  CentOS 5 and 6, created using rinse instea...   21
     ...
 
-There you can see two example results: `centos` and
-`tianon/centos`. The second result shows that it comes from
-the public repository of a user, named `tianon/`, while the first result,
-`centos`, doesn't explicitly list a repository which means that it comes from the
-trusted top-level namespace. The `/` character separates a user's
-repository from the image name.
+There you can see two example results: `centos` and `tianon/centos`. The second
+result shows that it comes from the public repository of a user, named
+`tianon/`, while the first result, `centos`, doesn't explicitly list a
+repository which means that it comes from the trusted top-level namespace for
+[Official Repositories](/docker-hub/official_repos). The `/` character separates
+a user's repository from the image name.
 
 Once you've found the image you want, you can download it with `docker pull <imagename>`:
 
-    $ sudo docker pull centos
+    $ docker pull centos
     Pulling repository centos
     0b443ba03958: Download complete
     539c0211cd76: Download complete
@@ -86,7 +86,7 @@ or committed your container to a named image as we saw
 
 Now you can push this repository to the registry designated by its name or tag.
 
-    $ sudo docker push yourname/newimage
+    $ docker push yourname/newimage
 
 The image will then be uploaded and available for use by your team-mates and/or the
 community.
@@ -101,7 +101,7 @@ information [here](http://docs.docker.com/docker-hub/).
 * Automated Builds
 * Webhooks
 
-### Private Repositories
+### Private repositories
 
 Sometimes you have images you don't want to make public and share with
 everyone. So Docker Hub allows you to have private repositories. You can
@@ -150,7 +150,7 @@ repository.
 You can create multiple Automated Builds per repository and configure them
 to point to specific `Dockerfile`'s or Git branches.
 
-#### Build Triggers
+#### Build triggers
 
 Automated Builds can also be triggered via a URL on Docker Hub. This
 allows you to rebuild an Automated build image on demand.
@@ -161,6 +161,9 @@ Webhooks are attached to your repositories and allow you to trigger an
 event when an image or updated image is pushed to the repository. With
 a webhook you can specify a target URL and a JSON payload that will be
 delivered when the image is pushed.
+
+See the Docker Hub documentation for [more information on
+webhooks](http://docs.docker.com/docker-hub/repos/#webhooks)
 
 ## Next steps
 

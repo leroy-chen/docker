@@ -1,5 +1,5 @@
-page_title: Resizing a Boot2Docker Volume	
-page_description: Resizing a Boot2Docker Volume in VirtualBox with GParted
+page_title: Resizing a Boot2Docker volume	
+page_description: Resizing a Boot2Docker volume in VirtualBox with GParted
 page_keywords: boot2docker, volume, virtualbox
 
 # Getting “no space left on device” errors with Boot2Docker?
@@ -28,7 +28,7 @@ it.
 
 Using the command line VirtualBox tools, clone the VMDK image to a VDI image:
 
-    $ vboxmanage clonehd /full/path/to/boot2docker-hd.vmdk /full/path/to/<newVDIimage>.vdi -—format VDI -—variant Standard
+    $ vboxmanage clonehd /full/path/to/boot2docker-hd.vmdk /full/path/to/<newVDIimage>.vdi --format VDI --variant Standard
 
 ## 3. Resize the VDI volume
 
@@ -36,7 +36,7 @@ Choose a size that will be appropriate for your needs. If you’re spinning up a
 lot of containers, or your containers are particularly large, larger will be 
 better:
 
-    $ vboxmanage modifyhd /full/path/to/<newVDIimage>.vdi —-resize <size in MB>
+    $ vboxmanage modifyhd /full/path/to/<newVDIimage>.vdi --resize <size in MB>
 
 ## 4. Download a disk partitioning tool ISO 
 
@@ -60,7 +60,7 @@ You might need to create the bus before you can add the ISO.
 ## 5. Add the new VDI image 
 
 In the settings for the Boot2Docker image in VirtualBox, remove the VMDK image 
-from the SATA contoller and add the VDI image.
+from the SATA controller and add the VDI image.
 
 <img src="/articles/b2d_volume_images/add_volume.png">
 

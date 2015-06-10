@@ -1,12 +1,12 @@
-page_title: Puppet Usage
-page_description: Installating and using Puppet
+page_title: Using Puppet
+page_description: Installing and using Puppet
 page_keywords: puppet, installation, usage, docker, documentation
 
 # Using Puppet
 
 > *Note:* Please note this is a community contributed installation path. The
 > only `official` installation is using the
-> [*Ubuntu*](/installation/ubuntulinux/#ubuntu-linux) installation
+> [*Ubuntu*](/installation/ubuntulinux) installation
 > path. This version may sometimes be out of date.
 
 ## Requirements
@@ -47,7 +47,7 @@ defined type which can be used like so:
 
 This is equivalent to running:
 
-    $ sudo docker pull ubuntu
+    $ docker pull ubuntu
 
 Note that it will only be downloaded if an image of that name does not
 already exist. This is downloading a large binary so on first run can
@@ -71,7 +71,7 @@ managed by Docker.
 
 This is equivalent to running the following command, but under upstart:
 
-    $ sudo docker run -d ubuntu /bin/sh -c "while true; do echo hello world; sleep 1; done"
+    $ docker run -d ubuntu /bin/sh -c "while true; do echo hello world; sleep 1; done"
 
 Run also contains a number of optional parameters:
 

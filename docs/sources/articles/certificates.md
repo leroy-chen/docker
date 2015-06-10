@@ -31,7 +31,7 @@ repository.
 
 > **Note:**
 > If there are multiple certificates, each will be tried in alphabetical
-> order. If there is an authentication error (e.g., 403, 5xx, etc.), Docker
+> order. If there is an authentication error (e.g., 403, 404, 5xx, etc.), Docker
 > will continue to try with the next certificate.
 
 Our example is set up like this:
@@ -45,9 +45,9 @@ Our example is set up like this:
 ## Creating the client certificates
 
 You will use OpenSSL's `genrsa` and `req` commands to first generate an RSA
-key and then use the key to create the certificate request.   
+key and then use the key to create the certificate.   
 
-    $ openssl genrsa -out client.key 1024
+    $ openssl genrsa -out client.key 4096
     $ openssl req -new -x509 -text -key client.key -out client.cert
 
 > **Warning:**: 
